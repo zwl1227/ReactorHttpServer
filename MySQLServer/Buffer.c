@@ -8,7 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <strings.h>
-
+#include "Log.h"
 Buffer *bufferInit(int size)
 {
     Buffer *buffer = (Buffer *)malloc(sizeof(Buffer));
@@ -132,6 +132,7 @@ char *bufferFindCRLF(Buffer *buffer)
 
 int bufferSendData(Buffer *buffer, int socket)
 {
+
     // 判断buffer有无数据
     int readable = bufferReadableSize(buffer);
     if (readable > 0)

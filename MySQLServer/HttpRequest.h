@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include "Buffer.h"
 #include "HttpResponse.h"
-#define MSG_SEND_AUTO
+// #define MSG_SEND_AUTO
 // 请求键值对
 typedef struct RequestHeader
 {

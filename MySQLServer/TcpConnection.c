@@ -40,7 +40,7 @@ int processRead(void *arg)
 }
 int processWrite(void *arg)
 {
-    Debug("开始发送数据");
+
     TcpConnection *conn = (TcpConnection *)arg;
     int count = bufferSendData(conn->writeBuffer, conn->channel->fd);
     if (count > 0)
@@ -48,6 +48,7 @@ int processWrite(void *arg)
         // 判断数据是否完全发送出去
         if (bufferReadableSize(conn->writeBuffer) == 0)
         {
+
             // 不再检测写事件--修改channel中保存的写事件
             writeEventEnable(conn->channel, false);
             // 修改dispatcher中检测的集合--添加任务节点
@@ -75,8 +76,7 @@ TcpConnection *tcpConnectionInit(int fd, EventLoop *evloop)
 
 int tcpConnectionDestroy(void *arg)
 {
-
-    TcpConnection *conn = (TcpConnection *)malloc(sizeof(TcpConnection));
+    TcpConnection *conn = (TcpConnection *)arg;
     if (conn != NULL)
     {
         if (conn->readBuffer && bufferReadableSize(conn->readBuffer) == 0 && conn->writeBuffer && bufferReadableSize(conn->writeBuffer) == 0)

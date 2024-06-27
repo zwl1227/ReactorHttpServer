@@ -89,6 +89,7 @@ int readLocalMessage(void *arg)
 }
 int eventLoopAddTask(EventLoop *evLoop, Channel *channel, int type)
 {
+
     // 加锁
     pthread_mutex_lock(&evLoop->mutex);
     // 创建新节点
@@ -107,6 +108,7 @@ int eventLoopAddTask(EventLoop *evLoop, Channel *channel, int type)
         evLoop->tail = node;
     }
     pthread_mutex_unlock(&evLoop->mutex);
+
     // 处理节点
     // 对链表的添加，可能是当前线程也可能是其他线程（主线程）
     // 若是修改，则是当前线程发起，当前线程处理
@@ -115,6 +117,7 @@ int eventLoopAddTask(EventLoop *evLoop, Channel *channel, int type)
     if (evLoop->threadID == pthread_self())
     {
         // 子线程--处理当前线程
+
         eventLoopProcessTask(evLoop);
     }
     else
@@ -138,6 +141,7 @@ int eventLoopProcessTask(EventLoop *evLoop)
         }
         else if (head->type == DELETE)
         {
+
             eventLoopRemove(evLoop, channel);
         }
         else if (head->type == MODIFY)
@@ -183,12 +187,15 @@ int eventLoopRemove(EventLoop *evLoop, Channel *channel)
     // 把channel对应的fd和event从epoll树上移除
     int fd = channel->fd;
     struct ChannelMap *channelMap = evLoop->channelMap;
+
     if (fd >= channelMap->size)
     {
         // channel不在检测集合中
         return -1;
     }
+
     int ret = evLoop->dispatcher->remove(channel, evLoop);
+
     return ret;
 }
 

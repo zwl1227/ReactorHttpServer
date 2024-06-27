@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <assert.h>
 #include "Log.h"
+#include "TcpMySQL.h"
 #define BUF_SIZE 1024
 #define HTTP_REPLY_BUF_SIZE 4096
 #define HeaderSize 12
@@ -362,6 +363,7 @@ static void sendDir(const char *dirName, Buffer *sendbuf, int cfd)
                     "<tr><td><a href = \"%s\">%s</a></td><td>%ld</td></tr>",
                     name, name, st.st_size);
         }
+
         bufferAppendString(sendbuf, replyBuf);
 #ifndef MSG_SEND_AUTO
         bufferSendData(sendbuf, cfd);
@@ -369,7 +371,29 @@ static void sendDir(const char *dirName, Buffer *sendbuf, int cfd)
         memset(replyBuf, 0, sizeof(replyBuf));
         free(namelist[i]);
     }
-    sprintf(replyBuf, "</table></body></html>");
+    // test执行一次sql
+    MYSQL_RES *res = queryOnce(NULL);
+    int num_fields = mysql_num_fields(res);
+    MYSQL_ROW row;
+    while (row = mysql_fetch_row(res))
+    {
+        sprintf(replyBuf + strlen(replyBuf), "<tr>");
+        for (int i = 1; i < num_fields; i++)
+        {
+            if (i == 5)
+                sprintf(replyBuf + strlen(replyBuf), "<td><a href = \"%s\">%s</a></td>", row[i], row[i]);
+            else
+                sprintf(replyBuf + strlen(replyBuf), "<td>%s</td>", row[i]);
+        }
+        sprintf(replyBuf + strlen(replyBuf), "</tr>");
+        bufferAppendString(sendbuf, replyBuf);
+#ifndef MSG_SEND_AUTO
+        bufferSendData(sendbuf, cfd);
+#endif
+        memset(replyBuf, 0, sizeof(replyBuf));
+    }
+    freeSQLRes(res);
+    sprintf(replyBuf + strlen(replyBuf), "</table></body></html>");
     bufferAppendString(sendbuf, replyBuf);
 #ifndef MSG_SEND_AUTO
     bufferSendData(sendbuf, cfd);
@@ -424,6 +448,7 @@ bool processHttpRequest(HttpRequest *request, HttpResponse *response)
         // 响应头
         httpResponseAddHeader(response, "Content-type", getFileType(".html"));
         response->sendDataFunc = sendDir;
+
         return true;
     }
     else
