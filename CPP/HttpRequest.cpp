@@ -10,6 +10,7 @@
 #include <assert.h>
 #include "Log.h"
 #include "TcpMySQL.h"
+#include "MySQLConnectionPool.h"
 #define BUF_SIZE 1024
 #define HTTP_REPLY_BUF_SIZE 4096
 #define HeaderSize 12
@@ -388,18 +389,29 @@ void HttpRequest::sendDir(string dirName, Buffer *sendbuf, int cfd)
         free(namelist[i]);
     }
     // test执行一次sql
-    MYSQL_RES *res = queryOnce(NULL);
-    int num_fields = mysql_num_fields(res);
-    MYSQL_ROW row;
-    while (row = mysql_fetch_row(res))
+    Debug("sql  once");
+    MySQLConnectionPool *pool = MySQLConnectionPool::getConnectionPool();
+    shared_ptr<MySQLConn> conn = pool->getConnection();
+    Debug("get sql connect  once");
+    if (!conn->query("SELECT * FROM resume_info "))
     {
+        Error("sql query error");
+    }
+    int num_fields = conn->getNumFields();
+    if (num_fields == 0)
+    {
+        Debug("sql  error");
+    }
+    while (conn->next())
+    {
+        Debug("sql query");
         sprintf(replyBuf + strlen(replyBuf), "<tr>");
         for (int i = 1; i < num_fields; i++)
         {
             if (i == 5)
-                sprintf(replyBuf + strlen(replyBuf), "<td><a href = \"%s\">%s</a></td>", row[i], row[i]);
+                sprintf(replyBuf + strlen(replyBuf), "<td><a href = \"%s\">%s</a></td>", conn->value(i).c_str(), conn->value(i).c_str());
             else
-                sprintf(replyBuf + strlen(replyBuf), "<td>%s</td>", row[i]);
+                sprintf(replyBuf + strlen(replyBuf), "<td>%s</td>", conn->value(i).c_str());
         }
         sprintf(replyBuf + strlen(replyBuf), "</tr>");
         sendbuf->appendString(replyBuf);
@@ -408,7 +420,6 @@ void HttpRequest::sendDir(string dirName, Buffer *sendbuf, int cfd)
 #endif
         memset(replyBuf, 0, sizeof(replyBuf));
     }
-    freeSQLRes(res);
     sprintf(replyBuf + strlen(replyBuf), "</table></body></html>");
     sendbuf->appendString(replyBuf);
 #ifndef MSG_SEND_AUTO
