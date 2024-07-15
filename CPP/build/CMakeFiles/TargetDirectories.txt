@@ -1,0 +1,3 @@
+/home/huaan/Desktop/Project/C/serverLearn/ReactorHttpServer/CPP/build/CMakeFiles/rebuild_cache.dir
+/home/huaan/Desktop/Project/C/serverLearn/ReactorHttpServer/CPP/build/CMakeFiles/edit_cache.dir
+/home/huaan/Desktop/Project/C/serverLearn/ReactorHttpServer/CPP/build/CMakeFiles/server.dir
